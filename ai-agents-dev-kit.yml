@@ -4,6 +4,7 @@ volumes:
   agent_llm_data: 
   agent_vector_data:
   agent_cache_data:
+  agent_neo4j_data:
 
 networks:
   aiagent_net:
@@ -97,3 +98,24 @@ services:
       - "sleep 3; OLLAMA_HOST=agent-llm:11434 ollama pull llama3.2"
     depends_on:
       - ollama
+
+  neo4j:
+    image: neo4j:5.26-enterprise
+    container_name: agent-graph-db
+    networks: [ 'aiagent_net' ]
+    restart: unless-stopped
+    ports:
+      - 7474:7474  # HTTP
+      - 7687:7687  # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_server_memory_heap_initial__size=1G
+      - NEO4J_server_memory_heap_max__size=2G
+    volumes:
+      - agent_neo4j_data:/data
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5

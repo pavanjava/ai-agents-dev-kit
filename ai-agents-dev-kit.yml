@@ -1,0 +1,99 @@
+volumes:
+  agent_workflow_data:
+  agent_db_data:
+  agent_llm_data: 
+  agent_vector_data:
+  agent_cache_data:
+
+networks:
+  aiagent_net:
+
+x-n8n: &service-n8n
+  image: n8nio/n8n:latest
+  networks: ['aiagent_net']
+  environment:
+    - DB_TYPE=postgresdb
+    - DB_POSTGRESDB_HOST=postgres
+    - DB_POSTGRESDB_USER=${POSTGRES_USER}
+    - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+    - N8N_DIAGNOSTICS_ENABLED=false
+    - N8N_PERSONALIZATION_ENABLED=false
+    - N8N_ENCRYPTION_KEY
+    - N8N_USER_MANAGEMENT_JWT_SECRET
+  links:
+    - postgres
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    networks: ['aiagent_net']
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - agent_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  n8n:
+    <<: *service-n8n
+    container_name: agent-workflow
+    restart: unless-stopped
+    ports:
+      - 5678:5678
+    volumes:
+      - agent_workflow_data:/home/node/.n8n
+      - ./shared:/data/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: agent-vector-store
+    networks: ['aiagent_net']
+    restart: unless-stopped
+    ports:
+      - 6333:6333
+    volumes:
+      - agent_vector_data:/qdrant/storage
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: agent-cache
+    networks: ['aiagent_net']
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+      - 8001:8001
+    volumes:
+      - agent_cache_data:/data
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agent-llm
+    networks: ['aiagent_net']
+    restart: unless-stopped
+    ports:
+      - 11434:11434
+    volumes:
+      - agent_llm_data:/root/.ollama
+
+  ollama-init:
+    image: ollama/ollama:latest
+    networks: ['aiagent_net']
+    container_name: agent-llm-init
+    restart: "no"
+    volumes:
+      - agent_llm_data:/root/.ollama
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - "sleep 3; OLLAMA_HOST=agent-llm:11434 ollama pull llama3.2"
+    depends_on:
+      - ollama

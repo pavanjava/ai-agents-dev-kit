@@ -1,8 +1,9 @@
 # ai-agents-dev-kit
-This is a self hosting repository for creating AI Agents and AI Agent powered workflows using n8n, qdrant, ollama, postgres and redis
+This is a self hosting repository for creating AI Agents and AI Agent powered workflows using n8n, qdrant, neo4j, ollama, postgres and redis
 
 ### Architecture
 ![Arch](architecture.png)
+
 
 ### How to run
 - `git clone git@github.com:pavanjava/ai-agents-dev-kit.git`

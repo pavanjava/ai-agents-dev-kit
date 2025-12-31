@@ -55,7 +55,7 @@ services:
         condition: service_healthy
 
   qdrant:
-    image: qdrant/qdrant
+    image: qdrant/qdrant:latest
     container_name: agent-vector-store
     networks: ['aiagent_net']
     restart: unless-stopped

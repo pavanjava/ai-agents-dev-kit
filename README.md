@@ -6,9 +6,19 @@ This is a self hosting repository for creating AI Agents and AI Agent powered wo
 
 
 ### How to run
-- `git clone git@github.com:pavanjava/ai-agents-dev-kit.git`
-- `cd <repo>`
-- `sh setup.sh`
+#### On Linux and Mac:
+```shell
+git clone git@github.com:pavanjava/ai-agents-dev-kit.git
+cd <repo>
+sh setup.sh
+```
+
+#### On Windows (powershell)
+```shell
+git clone git@github.com:pavanjava/ai-agents-dev-kit.git
+cd <repo>
+sh setup_experimental.ps1
+```
 
 ### What all gets installed as part of devkit?
 
